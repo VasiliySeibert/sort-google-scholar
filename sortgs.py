@@ -28,6 +28,7 @@ import sys
 if sys.version[0]=="3": raw_input=input
 
 # Default Parameters
+URL = "" # if you want to search with URL 
 KEYWORD = 'machine learning' # Default argument if command line is empty
 NRESULTS = 100 # Fetch 100 articles
 CSVPATH = '.' # Current folder
@@ -53,6 +54,7 @@ ROBOT_KW=['unusual traffic from your computer network', 'not a robot']
 def get_command_line_args():
     # Command line arguments
     parser = argparse.ArgumentParser(description='Arguments')
+    parser.add_argument('--url', type=str, help="""Search directly with URL" """)
     parser.add_argument('--kw', type=str, help="""Keyword to be searched. Use double quote followed by simple quote to search for an exact keyword. Example: "'exact keyword'" """)
     parser.add_argument('--sortby', type=str, help='Column to be sorted by. Default is by the columns "Citations", i.e., it will be sorted by the number of citations. If you want to sort by citations per year, use --sortby "cit/year"')
     parser.add_argument('--nresults', type=int, help='Number of articles to search on Google Scholar. Default is 100. (carefull with robot checking if value is too high)')
@@ -69,6 +71,10 @@ def get_command_line_args():
     keyword = KEYWORD
     if args.kw:
         keyword = args.kw
+    
+    url = URL
+    if args.url:
+        url = args.url
 
     nresults = NRESULTS
     if args.nresults:
@@ -102,7 +108,7 @@ def get_command_line_args():
     if args.debug:
         debug = True
 
-    return keyword, nresults, save_csv, csvpath, sortby, plot_results, start_year, end_year, debug
+    return keyword, nresults, save_csv, csvpath, sortby, plot_results, start_year, end_year, debug, url
 
 def get_citations(content):
     out = 0
@@ -178,19 +184,20 @@ def get_content_with_selenium(url):
 
 def main():
     # Get command line arguments
-    keyword, number_of_results, save_database, path, sortby_column, plot_results, start_year, end_year, debug = get_command_line_args()
+    keyword, number_of_results, save_database, path, sortby_column, plot_results, start_year, end_year, debug, url = get_command_line_args()
 
     # Create main URL based on command line arguments
-    if start_year:
-        GSCHOLAR_MAIN_URL = GSCHOLAR_URL + STARTYEAR_URL.format(start_year)
-    else:
-        GSCHOLAR_MAIN_URL = GSCHOLAR_URL
+    if url == "":
+        if start_year:
+            GSCHOLAR_MAIN_URL = GSCHOLAR_URL + STARTYEAR_URL.format(start_year)
+        else:
+            GSCHOLAR_MAIN_URL = GSCHOLAR_URL
 
-    if end_year != now.year:
-        GSCHOLAR_MAIN_URL = GSCHOLAR_MAIN_URL + ENDYEAR_URL.format(end_year)
+        if end_year != now.year:
+            GSCHOLAR_MAIN_URL = GSCHOLAR_MAIN_URL + ENDYEAR_URL.format(end_year)
 
-    if debug:
-        GSCHOLAR_MAIN_URL='https://web.archive.org/web/20210314203256/'+GSCHOLAR_URL
+        if debug:
+            GSCHOLAR_MAIN_URL='https://web.archive.org/web/20210314203256/'+GSCHOLAR_URL
 
     # Start new session
     session = requests.Session()
@@ -208,8 +215,8 @@ def main():
 
     # Get content from number_of_results URLs
     for n in range(0, number_of_results, 10):
-        #if start_year is None:
-        url = GSCHOLAR_MAIN_URL.format(str(n), keyword.replace(' ','+'))
+        if url == "":
+            url = GSCHOLAR_MAIN_URL.format(str(n), keyword.replace(' ','+'))
         if debug:
             print("Opening URL:", url)
         #else:
@@ -305,9 +312,14 @@ def main():
 
     # Save results
     if save_database:
-        fpath_csv = os.path.join(path,keyword.replace(' ','_')+'.csv')
-        fpath_csv = fpath_csv[:MAX_CSV_FNAME]
-        data_ranked.to_csv(fpath_csv, encoding='utf-8')
+        if url == "":
+            fpath_csv = os.path.join(path,keyword.replace(' ','_')+'.csv')
+            fpath_csv = fpath_csv[:MAX_CSV_FNAME]
+            data_ranked.to_csv(fpath_csv, encoding='utf-8')
+        else:
+            fpath_csv = os.path.join(path,keyword.replace(' ','_')+'.csv')
+            fpath_csv = fpath_csv[:MAX_CSV_FNAME]
+            data_ranked.to_csv(fpath_csv, encoding='utf-8')
 
 if __name__ == '__main__':
         main()
