@@ -317,9 +317,7 @@ def main():
             fpath_csv = fpath_csv[:MAX_CSV_FNAME]
             data_ranked.to_csv(fpath_csv, encoding='utf-8')
         else:
-            fpath_csv = os.path.join(path,keyword.replace(' ','_')+'.csv')
-            fpath_csv = fpath_csv[:MAX_CSV_FNAME]
-            data_ranked.to_csv(fpath_csv, encoding='utf-8')
+            data_ranked.to_csv("save_results.csv", encoding='utf-8')
 
 if __name__ == '__main__':
         main()
